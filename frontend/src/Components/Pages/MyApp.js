@@ -1,11 +1,10 @@
 import React from "react";
 import GetStarted from "./GetStarted";
 import CreateAccount from "./CreateAccount";
-import "./MyApp.css";
 
 function MyApp() {
   return (
-    <div className="myapp">
+    <div className="bg-blue-900 bg-opacity-60 min-h-screen">
       <GetStarted />
       <CreateAccount />
     </div>
