@@ -10,9 +10,25 @@ const cors = require("cors");
 const app = express();
 
 ///Database Connection
+const mongoURI =
+  process.env.MONGODB_URI || "mongodb://localhost:27017/securesignin";
+
+let isMongoConnected = false;
+
 mongoose
-  .connect("add Mongodp connection string here")
-  .then(() => console.log("connected to Mongo Database"));
+  .connect(mongoURI)
+  .then(() => {
+    console.log("connected to Mongo Database");
+    isMongoConnected = true;
+  })
+  .catch((err) => {
+    console.log("MongoDB connection error:", err.message);
+    console.log("Running in demo mode without database");
+    isMongoConnected = false;
+  });
+
+// Demo data for testing without MongoDB
+const demoUsers = [];
 
 /// defines the body format as json in each level where ever require
 app.use(express.json());
@@ -25,28 +41,50 @@ app.post("/register", async function (req, res) {
   try {
     const { email, Name, phone, password, confirmpassword } = req.body;
 
-    const existinguser = await Registerdata.findOne({ email });
-
-    if (existinguser) {
-      return res.status(400).json({ message: "Email already exists" });
-    }
-
     if (!(password === confirmpassword)) {
       return res.status(400).json({ message: "passwords do not match" });
     }
 
-    const hashedPassword = await hashPassword(password);
+    if (isMongoConnected) {
+      // Use MongoDB
+      const existinguser = await Registerdata.findOne({ email });
 
-    const newUser = new Registerdata({
-      email,
-      Name,
-      phone,
-      password: hashedPassword,
-      confirmpassword: hashedPassword,
-    });
+      if (existinguser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
 
-    await newUser.save();
-    res.status(200).send({ message: "registed successfully" });
+      const hashedPassword = await hashPassword(password);
+
+      const newUser = new Registerdata({
+        email,
+        Name,
+        phone,
+        password: hashedPassword,
+        confirmpassword: hashedPassword,
+      });
+
+      await newUser.save();
+    } else {
+      // Use demo mode
+      const existingUser = demoUsers.find((user) => user.email === email);
+
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+
+      const hashedPassword = await hashPassword(password);
+
+      demoUsers.push({
+        id: Date.now().toString(),
+        email,
+        Name,
+        phone,
+        password: hashedPassword,
+        confirmpassword: hashedPassword,
+      });
+    }
+
+    res.status(200).send({ message: "registered successfully" });
   } catch (err) {
     console.log(err);
     return res.status(500).send({ message: "internal server error" });
@@ -59,7 +97,15 @@ app.post("/login", async function (req, res) {
   try {
     const { email, password } = req.body;
 
-    const existinguser = await Registerdata.findOne({ email });
+    let existinguser;
+
+    if (isMongoConnected) {
+      // Use MongoDB
+      existinguser = await Registerdata.findOne({ email });
+    } else {
+      // Use demo mode
+      existinguser = demoUsers.find((user) => user.email === email);
+    }
 
     if (!existinguser) {
       return res.status(400).send({ message: "please register" });
@@ -77,7 +123,7 @@ app.post("/login", async function (req, res) {
     //  object id that is genrated with uniquie value in DB For each user
     const payload = {
       user: {
-        id: existinguser.id,
+        id: existinguser.id || existinguser._id,
       },
     };
     jwt.sign(payload, "Scrt", { expiresIn: 120000 }, (err, token) => {
@@ -87,6 +133,7 @@ app.post("/login", async function (req, res) {
     // res.status(200).send({ message: "logged in successfully" });
   } catch (error) {
     console.log(error);
+    return res.status(500).send({ message: "internal server error" });
   }
 });
 
@@ -94,7 +141,16 @@ app.post("/login", async function (req, res) {
 
 app.get("/myprofile", Verify, async (req, res) => {
   try {
-    const existinguser = await Registerdata.findById(req.user.id);
+    let existinguser;
+
+    if (isMongoConnected) {
+      // Use MongoDB
+      existinguser = await Registerdata.findById(req.user.id);
+    } else {
+      // Use demo mode
+      existinguser = demoUsers.find((user) => user.id === req.user.id);
+    }
+
     if (!existinguser) {
       return res.status(400).send("user not found");
     }

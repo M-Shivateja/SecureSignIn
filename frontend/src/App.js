@@ -1,5 +1,4 @@
 // import logo from "./logo.svg";
-import "./App.css";
 import Loginpage from "./Components/Pages/Loginpage";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Myprofile from "./Components/Pages/Myprofile";
@@ -7,7 +6,7 @@ import Registerpage from "./Components/Pages/Registerpage";
 import Header from "./Components/Pages/Header";
 import { useState, createContext } from "react";
 import PrivateRut from "./Components/PvtRoute/PrivateRut";
-import "bootstrap/dist/css/bootstrap.min.css";
+
 import "react-toastify/dist/ReactToastify.css";
 import { ToastContainer } from "react-toastify";
 import MyApp from "./Components/Pages/MyApp";
