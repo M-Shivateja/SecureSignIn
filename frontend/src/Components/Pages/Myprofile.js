@@ -1,10 +1,4 @@
-// import React from "react";
 
-// function Myprofile() {
-//   return <div>my profile</div>;
-// }
-
-// export default Myprofile;
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 
@@ -20,7 +14,7 @@ function Myprofile() {
     const fetchProfile = async () => {
       try {
         const token = localStorage.getItem("token");
-        const response = await axios.get("http://localhost:5000/myprofile", {
+        const response = await axios.get("https://securesignin-backend.onrender.com/myprofile", {
           headers: { Authorization: token },
         });
         setUser(response.data);
